@@ -1,0 +1,95 @@
+name: Patched Release Build
+
+on: workflow_dispatch
+
+jobs:
+  build-release:
+    name: Build Release Apk
+    runs-on: macos-latest
+    if: github.repository == 'tofuliang/bv'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+          submodules: 'true'
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Write google-services.json
+        env:
+          DATA: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: echo $DATA > app/google-services.json
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+#      - name: Enable for MainlandChina
+#        run: |
+#          sed -i "" -e':a' -e'N' -e'$!ba' -e's/isMainlandChina() = withContext(Dispatchers\.IO.*/isMainlandChina() = withContext(Dispatchers.IO) { \n false\n}\n}/' app/src/main/kotlin/dev/aaa1115910/bv/util/NetworkUtil.kt
+#          sed -i "" -e':a' -e'N' -e'$!ba' -e's/TopNavItem\.Search.*TopNavItem\.Dynamics/TopNavItem.Dynamics, \n            TopNavItem.Search, \n            TopNavItem.Recommend, \n            TopNavItem.Popular/' app/src/main/kotlin/dev/aaa1115910/bv/component/TopNav.kt
+
+      - name: Add signing properties
+        env:
+          SIGNING_PROPERTIES: ${{ secrets.SIGNING_PROPERTIES }}
+        run: |
+          echo ${{ secrets.SIGNING_PROPERTIES }} > encoded_signing_properties
+          base64 -Dd -i encoded_signing_properties > signing.properties
+
+      - name: Add jks file
+        run: |
+          echo ${{ secrets.SIGN_KEY }} > ./encoded_key
+          base64 -Dd -i encoded_key > /tmp/bv
+
+      - name: Build apk
+        run: |
+          ./gradlew assembleLimitedRelease
+          ./gradlew assembleDefaultRelease
+
+      - name: Read release apk output metadata
+        id: apk-meta-release
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: app/build/outputs/apk/default/release/output-metadata.json
+
+      - name: Parse apk infos
+        id: apk-infos
+        run: |
+          echo "release_info_version_code=${{ fromJson(steps.apk-meta-release.outputs.content).elements[0].versionCode }}" >> $GITHUB_ENV
+          echo "release_info_version_name=${{ fromJson(steps.apk-meta-release.outputs.content).elements[0].versionName }}" >> $GITHUB_ENV
+
+      - name: Get changelog
+        id: changelog
+        run: |
+          {
+            echo "changelog<<EOF"
+            echo "$(git log --pretty=format:"- %s (%h)" ${{ github.event.before }}..${{ github.sha }})"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+
+      # upload artifacts release
+
+      - name: Archive release build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Release build artifact
+          path: app/build/outputs/apk/default/release/BV_${{ env.release_info_version_code }}_${{ env.release_info_version_name }}_default_*.apk
+
+      - name: Archive limited build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Limited build artifact
+          path: app/build/outputs/apk/limited/release/BV_${{ env.release_info_version_code }}_${{ env.release_info_version_name }}_limited_*.apk
+
+      - name: 失败调试
+        uses: P3TERX/ssh2actions@main
+        if: ${{ failure() }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
