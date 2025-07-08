@@ -41,7 +41,7 @@ fun SeekBar(
         drawLine(
             color = colors.inactiveTrackColor,
             start = Offset(0f, center.y),
-            end = Offset(size.width - 0f, center.y),
+            end = Offset(size.width, center.y),
             strokeWidth = trackWidth,
             cap = StrokeCap.Round
         )
@@ -102,8 +102,8 @@ private fun SeekPreview() {
     MaterialTheme {
         SeekBar(
             modifier = Modifier.padding(horizontal = 16.dp),
-            duration = 1000,
-            position = 300,
+            duration = 100000, // 100 seconds
+            position = 30000,  // 30 seconds
             bufferedPercentage = 50,
             sponsorBlockData = VideoPlayerSponsorBlockData(
                 isEnabled = true,

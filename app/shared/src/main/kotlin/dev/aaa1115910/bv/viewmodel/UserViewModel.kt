@@ -12,6 +12,7 @@ import dev.aaa1115910.bv.BVApp
 import dev.aaa1115910.bv.BuildConfig
 import dev.aaa1115910.bv.R
 import dev.aaa1115910.bv.repository.UserRepository
+import dev.aaa1115910.biliapi.repositories.UserRepository as UserApiRepository
 import dev.aaa1115910.bv.util.Prefs
 import dev.aaa1115910.bv.util.fInfo
 import dev.aaa1115910.bv.util.toast
@@ -23,7 +24,8 @@ import org.koin.android.annotation.KoinViewModel
 
 @KoinViewModel
 class UserViewModel(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val userApiRepository: UserApiRepository
 ) : ViewModel() {
     private var shouldUpdateInfo = true
     private val logger = KotlinLogging.logger { }
@@ -50,6 +52,10 @@ class UserViewModel(
                 shouldUpdateInfo = false
                 userRepository.username = responseData!!.name
                 userRepository.avatar = responseData!!.face
+                Prefs.upperList = userApiRepository.getFollowedUsers(
+                    mid = Prefs.uid,
+                    preferApiType = Prefs.apiType
+                ).map { user -> user.name }
             }.onFailure {
                 when (it) {
                     is AuthFailureException -> {
@@ -80,5 +86,6 @@ class UserViewModel(
     fun clearUserInfo() {
         userRepository.username = ""
         userRepository.avatar = ""
+        Prefs.upperList = listOf()
     }
 }

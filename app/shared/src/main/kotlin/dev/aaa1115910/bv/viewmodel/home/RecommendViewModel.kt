@@ -8,7 +8,9 @@ import androidx.lifecycle.ViewModel
 import dev.aaa1115910.biliapi.entity.home.RecommendPage
 import dev.aaa1115910.biliapi.entity.ugc.UgcItem
 import dev.aaa1115910.biliapi.repositories.RecommendVideoRepository
+import dev.aaa1115910.biliapi.repositories.UserRepository
 import dev.aaa1115910.bv.BVApp
+import dev.aaa1115910.bv.BuildConfig
 import dev.aaa1115910.bv.util.Prefs
 import dev.aaa1115910.bv.util.addAllWithMainContext
 import dev.aaa1115910.bv.util.fError
@@ -21,11 +23,15 @@ import org.koin.android.annotation.KoinViewModel
 
 @KoinViewModel
 class RecommendViewModel(
-    private val recommendVideoRepository: RecommendVideoRepository
+    private val recommendVideoRepository: RecommendVideoRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
     private val logger = KotlinLogging.logger {}
     val recommendVideoList = mutableStateListOf<UgcItem>()
 
+    private val upperList = mutableStateListOf<String>().apply {
+        addAll(Prefs.upperList)
+    }
     private var nextPage = RecommendPage()
     var refreshing by mutableStateOf(true)
     var loading by mutableStateOf(false)
@@ -63,7 +69,14 @@ class RecommendViewModel(
             )
             beforeAppendData()
             nextPage = recommendData.nextPage
-            recommendVideoList.addAllWithMainContext(recommendData.items)
+            if (BuildConfig.RESTRICTED) {
+                val filteredList = recommendData.items.filter {
+                    upperList.contains(it.author)
+                }
+                recommendVideoList.addAll(filteredList)
+            } else {
+                recommendVideoList.addAllWithMainContext(recommendData.items)
+            }
         }.onFailure {
             logger.fError { "Load recommend video list failed: ${it.stackTraceToString()}" }
             withContext(Dispatchers.Main) {

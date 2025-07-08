@@ -25,6 +25,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import dev.aaa1115910.bv.BuildConfig
 import dev.aaa1115910.bv.tv.component.HomeTopNavItem
 import dev.aaa1115910.bv.tv.component.TopNav
 import dev.aaa1115910.bv.tv.screens.main.home.DynamicsScreen
@@ -58,7 +59,7 @@ fun HomeContent(
     val popularState = rememberLazyListState()
     val dynamicState = rememberLazyListState()
 
-    var selectedTab by remember { mutableStateOf(HomeTopNavItem.Recommend) }
+    var selectedTab by remember { mutableStateOf(HomeTopNavItem.Dynamics) }
     var focusOnContent by remember { mutableStateOf(false) }
     var hasFocus by remember { mutableStateOf(false) }
     val currentListOnTop by remember {
@@ -81,7 +82,9 @@ fun HomeContent(
             recommendViewModel.loadMore()
         }
         scope.launch(Dispatchers.IO) {
-            popularViewModel.loadMore()
+            if (!BuildConfig.RESTRICTED) {
+                popularViewModel.loadMore()
+            }
         }
         scope.launch(Dispatchers.IO) {
             dynamicViewModel.loadMoreVideo()
@@ -129,7 +132,7 @@ fun HomeContent(
                 modifier = Modifier
                     .focusRequester(navFocusRequester)
                     .padding(end = 80.dp),
-                items = HomeTopNavItem.entries,
+                items = HomeTopNavItem.getItems(context),
                 isLargePadding = !focusOnContent && currentListOnTop,
                 onSelectedChanged = { nav ->
                     selectedTab = nav as HomeTopNavItem

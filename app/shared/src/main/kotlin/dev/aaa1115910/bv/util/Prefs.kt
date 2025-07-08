@@ -143,6 +143,19 @@ object Prefs {
                 value.map { it.ordinal }.joinToString(",")
             )
         }
+    var upperList: List<String>
+        get() = runBlocking {
+            val upperListString =
+                dsm.getPreferenceFlow(PrefKeys.prefDefaultUpperListRequest).first()
+            if (upperListString == "") {
+                emptyList()
+            } else {
+                upperListString.split(",")
+            }
+        }
+        set(value) = runBlocking {
+            dsm.editPreference(PrefKeys.prefDefaultUpperListKey, value.joinToString(","))
+        }
 
     var defaultDanmakuArea: Float
         get() = runBlocking {
@@ -375,6 +388,7 @@ object PrefKeys {
     val prefDefaultDanmakuOpacityKey = floatPreferencesKey("ddo")
     val prefDefaultDanmakuEnabledKey = booleanPreferencesKey("dde")
     val prefDefaultDanmakuTypesKey = stringPreferencesKey("ddts")
+    val prefDefaultUpperListKey = stringPreferencesKey("upl")
     val prefDefaultDanmakuAreaKey = floatPreferencesKey("dda")
     val prefDefaultVideoCodecKey = intPreferencesKey("dvc")
     val prefEnabledFirebaseCollectionKey = booleanPreferencesKey("efc")
@@ -423,6 +437,8 @@ object PrefKeys {
     val prefDefaultDanmakuEnabledRequest = PreferenceRequest(prefDefaultDanmakuEnabledKey, true)
     val prefDefaultDanmakuTypesRequest =
         PreferenceRequest(prefDefaultDanmakuTypesKey, "0,1,2,3")
+    val prefDefaultUpperListRequest =
+        PreferenceRequest(prefDefaultUpperListKey, "")
     val prefDefaultDanmakuAreaRequest = PreferenceRequest(prefDefaultDanmakuAreaKey, 1f)
     val prefDefaultVideoCodecRequest =
         PreferenceRequest(prefDefaultVideoCodecKey, VideoCodec.AVC.ordinal)

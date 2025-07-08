@@ -5,7 +5,7 @@ plugins {
     alias(gradleLibs.plugins.compose.compiler)
     alias(gradleLibs.plugins.google.ksp)
     alias(gradleLibs.plugins.google.protobuf)
-    alias(gradleLibs.plugins.google.services) apply false
+//    alias(gradleLibs.plugins.google.services) apply false
     alias(gradleLibs.plugins.kotlin.android)
     alias(gradleLibs.plugins.kotlin.serialization)
 }
@@ -52,6 +52,23 @@ android {
                 name = "SPONSOR_BLOCK_EXT_VERSION",
                 value = "\"0.1.0\"" // Initial version for this integration
             )
+        }
+    }
+
+    flavorDimensions.add(FlavorConfiguration.FLAVOR_DIMENSION)
+
+    productFlavors {
+        create(FlavorConfiguration.FLAVOR_RESTRICTED) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+            buildConfigField("boolean", FlavorConfiguration.BUILD_CONFIG_RESTRICTED, "true")
+        }
+        create(FlavorConfiguration.FLAVOR_LITE) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+            buildConfigField("boolean", FlavorConfiguration.BUILD_CONFIG_RESTRICTED, "false")
+        }
+        create(FlavorConfiguration.FLAVOR_DEFAULT) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+            buildConfigField("boolean", FlavorConfiguration.BUILD_CONFIG_RESTRICTED, "false")
         }
     }
 

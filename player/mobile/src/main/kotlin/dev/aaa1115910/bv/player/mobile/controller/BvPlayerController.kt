@@ -478,18 +478,10 @@ fun BvPlayerControllerVideoContent(
                             if (volumeMove != 0f && !isHorizontal) {
                                 isMovingVolume = false
                                 Log.i("BvPlayerController", "Stop move volume")
-                            } else if (brightnessMove != 0f && !isHorizontal) {
+                            }
+                            if (brightnessMove != 0f && !isHorizontal) {
                                 isMovingBrightness = false
                                 Log.i("BvPlayerController", "Stop move brightness")
-                            } else {
-                                isMovingSeek = false
-                                if (moveStartInSafetyArea) {
-                                    moveStartInSafetyArea = false
-                                    return@detectPlayerGestures
-                                }
-                                val seekMoveMs = seekMove.toLong() * 50
-                                onSeekToPosition(moveStartTime + seekMoveMs)
-                                Log.i("BvPlayerController", "Seek move $seekMoveMs")
                             }
                         }
                     )
@@ -536,7 +528,7 @@ fun BvPlayerControllerVideoContent(
                 )
             }
         }
-        
+
         // SponsorBlock Toast - 放在最高层级，确保可以点击
         SponsorBlockSkipToast(
             show = sponsorBlockData.showSkipToast,
@@ -545,7 +537,7 @@ fun BvPlayerControllerVideoContent(
             onCancel = { sponsorBlockManager?.cancelSkip() },
             onManualSkip = { sponsorBlockManager?.triggerManualSkip() }
         )
-        
+
         // SponsorBlock Result Toast - 放在最高层级
         SponsorBlockResultToast(
             show = sponsorBlockData.showResultToast,

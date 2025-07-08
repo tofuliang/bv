@@ -2,7 +2,7 @@ plugins {
     alias(gradleLibs.plugins.android.library)
     alias(gradleLibs.plugins.compose.compiler)
     alias(gradleLibs.plugins.google.ksp)
-    alias(gradleLibs.plugins.google.services) apply false
+//    alias(gradleLibs.plugins.google.services) apply false
     alias(gradleLibs.plugins.kotlin.android)
     alias(gradleLibs.plugins.kotlin.serialization)
 }
@@ -15,6 +15,20 @@ android {
         minSdk = AppConfiguration.minSdk
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    flavorDimensions.add(FlavorConfiguration.FLAVOR_DIMENSION)
+
+    productFlavors {
+        create(FlavorConfiguration.FLAVOR_RESTRICTED) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+        }
+        create(FlavorConfiguration.FLAVOR_LITE) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+        }
+        create(FlavorConfiguration.FLAVOR_DEFAULT) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
         }
     }
 

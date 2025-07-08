@@ -19,6 +19,20 @@ android {
         buildConfigField("String", "libVLCVersion", "\"${AppConfiguration.libVLCVersion}\"")
     }
 
+    flavorDimensions.add(FlavorConfiguration.FLAVOR_DIMENSION)
+
+    productFlavors {
+        create(FlavorConfiguration.FLAVOR_RESTRICTED) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+        }
+        create(FlavorConfiguration.FLAVOR_LITE) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+        }
+        create(FlavorConfiguration.FLAVOR_DEFAULT) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false

@@ -227,8 +227,8 @@ private fun BottomControllers(
                             onPlay = onPlay,
                             onPause = onPause
                         )
-                        TextButton(onClick = { onToggleDanmaku(enabledDanmaku) }) {
-                            Text(text = "弹幕开关" + if (enabledDanmaku) "✔" else "✖")
+                        TextButton(onClick = { onToggleDanmaku(!enabledDanmaku) }) { // Corrected toggle logic
+                            Text(text = "弹幕" + if (enabledDanmaku) "关" else "开")
                         }
                         TextButton(onClick = onShowDanmakuController) {
                             Text(text = "弹幕设置")
@@ -241,7 +241,7 @@ private fun BottomControllers(
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(onClick = { /*TODO*/ }) {
+                        TextButton(onClick = { /*TODO: Implement Subtitle Menu*/ }) {
                             Text(text = "字幕")
                         }
                         if (showPartButton) {

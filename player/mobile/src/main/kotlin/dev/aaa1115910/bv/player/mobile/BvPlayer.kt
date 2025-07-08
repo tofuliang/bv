@@ -117,7 +117,6 @@ fun BvPlayer(
 
     var currentDanmakuMaskFrame: DanmakuMaskFrame? by remember { mutableStateOf(null) }
 
-
     val updatePosition = {
         currentPosition = videoPlayer.currentPosition
         duration = videoPlayer.duration
