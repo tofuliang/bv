@@ -38,6 +38,7 @@ import dev.aaa1115910.bv.util.getDisplayName
 import dev.aaa1115910.bv.util.ifElse
 import dev.aaa1115910.bv.util.isKeyDown
 import kotlinx.coroutines.delay
+import dev.aaa1115910.bv.BuildConfig
 
 @Composable
 fun TopNav(
@@ -137,6 +138,20 @@ enum class HomeTopNavItem(private val displayName: String) : TopNavItem {
 
     override fun getDisplayName(context: Context): String {
         return displayName
+    }
+
+    companion object {
+        fun getItems(context: Context): List<HomeTopNavItem> {
+            val items = mutableListOf<HomeTopNavItem>()
+
+            items.add(Dynamics)
+            if (!BuildConfig.RESTRICTED) {
+                items.add(Popular)
+            }
+            items.add(Recommend)
+
+            return items
+        }
     }
 }
 

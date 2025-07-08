@@ -1,5 +1,6 @@
 package dev.aaa1115910.bv.tv.screens.main
 
+import android.content.Context
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -43,6 +44,7 @@ import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import coil.compose.AsyncImage
+import dev.aaa1115910.bv.BuildConfig
 import dev.aaa1115910.bv.ui.theme.BVTheme
 import dev.aaa1115910.bv.util.ifElse
 import dev.aaa1115910.bv.util.isDpadRight
@@ -139,12 +141,19 @@ fun NavigationDrawerScope.DrawerContent(
             modifier = Modifier.focusRestorer(centerFocusRequester),
             verticalArrangement = Arrangement.Center
         ) {
-            listOf(
-                DrawerItem.Search,
-                DrawerItem.Home,
-                DrawerItem.UGC,
-                DrawerItem.PGC,
-            ).forEach { item ->
+            val entries = if (BuildConfig.RESTRICTED) {
+                listOf(
+                    DrawerItem.Home,
+                )
+            } else {
+                listOf(
+                    DrawerItem.Search,
+                    DrawerItem.Home,
+                    DrawerItem.UGC,
+                    DrawerItem.PGC,
+                )
+            }
+            entries.forEach { item ->
                 item {
                     NavigationDrawerItem(
                         modifier = Modifier

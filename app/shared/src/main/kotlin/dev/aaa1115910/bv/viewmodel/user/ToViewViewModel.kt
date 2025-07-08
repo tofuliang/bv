@@ -34,7 +34,9 @@ class ToViewViewModel(
     companion object {
         private val logger = KotlinLogging.logger { }
     }
-
+    private val upperList = mutableStateListOf<String>().apply {
+        addAll(Prefs.upperList)
+    }
     var histories = mutableStateListOf<VideoCardData>()
     var noMore by mutableStateOf(false)
 
@@ -58,20 +60,22 @@ class ToViewViewModel(
             )
 
             data.data.forEach { ToViewItem ->
-                histories.addWithMainContext(
-                    VideoCardData(
-                        avid = ToViewItem.oid,
-                        title = ToViewItem.title,
-                        cover = ToViewItem.cover,
-                        upName = ToViewItem.author,
-                        timeString = if (ToViewItem.progress == -1) context.getString(R.string.play_time_finish)
-                        else context.getString(
-                            R.string.play_time_history,
-                            (ToViewItem.progress * 1000L).formatHourMinSec(),
-                            (ToViewItem.duration * 1000L).formatHourMinSec()
+                if (!BuildConfig.RESTRICTED || upperList.contains(ToViewItem.author)) {
+                    histories.addWithMainContext(
+                        VideoCardData(
+                            avid = ToViewItem.oid,
+                            title = ToViewItem.title,
+                            cover = ToViewItem.cover,
+                            upName = ToViewItem.author,
+                            timeString = if (ToViewItem.progress == -1) context.getString(R.string.play_time_finish)
+                            else context.getString(
+                                R.string.play_time_history,
+                                (ToViewItem.progress * 1000L).formatHourMinSec(),
+                                (ToViewItem.duration * 1000L).formatHourMinSec()
+                            )
                         )
                     )
-                )
+                }
             }
             //update cursor
             cursor = data.cursor

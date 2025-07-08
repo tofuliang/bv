@@ -54,6 +54,7 @@ import dev.aaa1115910.bv.player.entity.LocalVideoPlayerVideoInfoData
 import dev.aaa1115910.bv.player.entity.PlayMode
 import dev.aaa1115910.bv.player.entity.RequestState
 import dev.aaa1115910.bv.player.entity.Resolution
+import dev.aaa1115910.bv.player.entity.SponsorBlockManager
 import dev.aaa1115910.bv.player.entity.VideoAspectRatio
 import dev.aaa1115910.bv.player.entity.VideoCodec
 import dev.aaa1115910.bv.player.entity.VideoListItem
@@ -81,6 +82,7 @@ fun BvPlayer(
     modifier: Modifier = Modifier,
     videoPlayer: AbstractVideoPlayer,
     danmakuPlayer: DanmakuPlayer?,
+    sponsorBlockManager: SponsorBlockManager? = null,
     onSendHeartbeat: suspend (Int) -> Unit,
     onClearBackToHistoryData: () -> Unit,
     onLoadNextVideo: () -> Unit,
@@ -100,7 +102,8 @@ fun BvPlayer(
     onSubtitleSizeChange: (TextUnit) -> Unit,
     onSubtitleBackgroundOpacityChange: (Float) -> Unit,
     onSubtitleBottomPadding: (Dp) -> Unit,
-    onPlayModeChange: (PlayMode) -> Unit
+    onPlayModeChange: (PlayMode) -> Unit,
+    onSponsorBlockToastConfirm: (Float) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val logger = KotlinLogging.logger("BvPlayer")
@@ -156,6 +159,8 @@ fun BvPlayer(
         currentPosition = videoPlayer.currentPosition.coerceAtLeast(0L)
         duration = videoPlayer.duration.coerceAtLeast(0L)
         bufferedPercentage = videoPlayer.bufferedPercentage
+        // Call SponsorBlock manager's check for auto skip
+        sponsorBlockManager?.checkAndTriggerAutoSkip(currentPosition, duration, isPlaying)
     }
 
     val initDanmakuConfig: () -> Unit = {
@@ -290,6 +295,8 @@ fun BvPlayer(
             isPlaying = true
             isBuffering = false
             updateBackToHistory()
+            // Check for skip when play starts/resumes
+            sponsorBlockManager?.checkAndTriggerAutoSkip(currentPosition, duration, true)
         }
 
         override fun onPause() {
@@ -473,6 +480,20 @@ fun BvPlayer(
         }
     }
 
+    // Observe skipToMillis from SponsorBlockManager
+    LaunchedEffect(sponsorBlockManager) {
+        sponsorBlockManager?.skipToMillis?.collect { skipTime ->
+            skipTime?.let {
+                logger.fInfo { "BvPlayer (TV): Received skip event to $it" }
+                videoPlayer.seekTo(it)
+                mDanmakuPlayer?.seekTo(it)
+                mDanmakuPlayer?.pause()
+                videoPlayer.start()
+                sponsorBlockManager.consumeSkipEvent()
+            }
+        }
+    }
+
     CompositionLocalProvider(
         LocalVideoPlayerSeekData provides VideoPlayerSeekData(
             duration = duration,
@@ -506,6 +527,7 @@ fun BvPlayer(
             modifier = modifier
                 .focusRequester(focusRequester),
             videoPlayer = videoPlayer,
+            sponsorBlockManager = sponsorBlockManager,
 
             onPlay = { videoPlayer.start() },
             onPause = {
@@ -634,6 +656,7 @@ fun BvPlayer(
                 logger.info { "On play mode change: $playMode" }
                 onPlayModeChange(playMode)
             },
+            onSponsorBlockToastConfirm = onSponsorBlockToastConfirm,
             onRequestFocus = { focusRequester.requestFocus() },
         ) {
             LaunchedEffect(Unit) {

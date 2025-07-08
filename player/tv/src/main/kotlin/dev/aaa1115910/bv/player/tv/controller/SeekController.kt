@@ -25,7 +25,9 @@ import dev.aaa1115910.biliapi.entity.video.VideoShot
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSeekData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSeekThumbData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerStateData
+import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSponsorBlockData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerVideoShotData
+import dev.aaa1115910.bv.player.entity.VideoPlayerSponsorBlockData
 import dev.aaa1115910.bv.player.seekbar.SeekMoveState
 import dev.aaa1115910.bv.player.tv.VideoSeekBar
 
@@ -40,6 +42,7 @@ fun SeekController(
     val videoPlayerSeekData = LocalVideoPlayerSeekData.current
     val videoPlayerSeekThumbData = LocalVideoPlayerSeekThumbData.current
     val videoPlayerStateData = LocalVideoPlayerStateData.current
+    val sponsorBlockData = LocalVideoPlayerSponsorBlockData.current
 
     Box(
         modifier = modifier.fillMaxSize()
@@ -58,7 +61,8 @@ fun SeekController(
                 idleIcon = videoPlayerSeekThumbData.idleIcon,
                 movingIcon = videoPlayerSeekThumbData.movingIcon,
                 videoShot = videoPlayerVideoShotData.videoShot,
-                playing = videoPlayerStateData.isPlaying
+                playing = videoPlayerStateData.isPlaying,
+                sponsorBlockData = sponsorBlockData
             )
         }
     }
@@ -73,7 +77,8 @@ private fun SeekController(
     idleIcon: String,
     movingIcon: String,
     videoShot: VideoShot? = null,
-    playing: Boolean
+    playing: Boolean,
+    sponsorBlockData: VideoPlayerSponsorBlockData
 ) {
     Column(
         modifier = modifier,
@@ -111,7 +116,8 @@ private fun SeekController(
                 idleIcon = idleIcon,
                 movingIcon = movingIcon,
                 showPosition = true,
-                playing = playing
+                playing = playing,
+                sponsorBlockData = sponsorBlockData
             )
         }
     }
@@ -135,7 +141,8 @@ private fun VideoProgressSeekPreview(@PreviewParameter(VideoProgressProvider::cl
                 imageHeight = 0,
                 images = emptyList()
             ),
-            playing = true
+            playing = true,
+            sponsorBlockData = VideoPlayerSponsorBlockData()
         )
     }
 }

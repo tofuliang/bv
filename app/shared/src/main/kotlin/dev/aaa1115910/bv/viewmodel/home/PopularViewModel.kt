@@ -8,7 +8,9 @@ import androidx.lifecycle.ViewModel
 import dev.aaa1115910.biliapi.entity.rank.PopularVideoPage
 import dev.aaa1115910.biliapi.entity.ugc.UgcItem
 import dev.aaa1115910.biliapi.repositories.RecommendVideoRepository
+import dev.aaa1115910.biliapi.repositories.UserRepository
 import dev.aaa1115910.bv.BVApp
+import dev.aaa1115910.bv.BuildConfig
 import dev.aaa1115910.bv.util.Prefs
 import dev.aaa1115910.bv.util.addAllWithMainContext
 import dev.aaa1115910.bv.util.fError
@@ -21,9 +23,13 @@ import org.koin.android.annotation.KoinViewModel
 
 @KoinViewModel
 class PopularViewModel(
-    private val recommendVideoRepository: RecommendVideoRepository
+    private val recommendVideoRepository: RecommendVideoRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
     private val logger = KotlinLogging.logger {}
+    private val upperList = mutableStateListOf<String>().apply {
+        addAll(Prefs.upperList)
+    }
     val popularVideoList = mutableStateListOf<UgcItem>()
 
     private var nextPage = PopularVideoPage()
@@ -54,7 +60,14 @@ class PopularViewModel(
             )
             beforeAppendData()
             nextPage = popularVideoData.nextPage
-            popularVideoList.addAllWithMainContext(popularVideoData.list)
+            if (BuildConfig.RESTRICTED) {
+                val filteredList = popularVideoData.list.filter {
+                    upperList.contains(it.author)
+                }
+                popularVideoList.addAll(filteredList)
+            } else {
+                popularVideoList.addAllWithMainContext(popularVideoData.list)
+            }
         }.onFailure {
             logger.fError { "Load popular video list failed: ${it.stackTraceToString()}" }
             withContext(Dispatchers.Main) {

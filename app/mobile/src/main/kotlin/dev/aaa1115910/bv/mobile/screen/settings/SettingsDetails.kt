@@ -18,6 +18,7 @@ import dev.aaa1115910.bv.mobile.screen.settings.details.AboutContent
 import dev.aaa1115910.bv.mobile.screen.settings.details.AdvanceContent
 import dev.aaa1115910.bv.mobile.screen.settings.details.DebugContent
 import dev.aaa1115910.bv.mobile.screen.settings.details.PlayContent
+import dev.aaa1115910.bv.mobile.screen.settings.details.SponsorBlockContent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

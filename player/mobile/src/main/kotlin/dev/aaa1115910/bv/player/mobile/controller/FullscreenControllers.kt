@@ -43,11 +43,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerConfigData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSeekData
+import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSponsorBlockData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerStateData
 import dev.aaa1115910.bv.player.entity.Resolution
 import dev.aaa1115910.bv.player.entity.VideoPlayerConfigData
 import dev.aaa1115910.bv.player.entity.VideoPlayerSeekData
+import dev.aaa1115910.bv.player.entity.VideoPlayerSponsorBlockData
 import dev.aaa1115910.bv.player.entity.VideoPlayerStateData
+import dev.aaa1115910.bv.player.entity.sponsorblock.SegmentItem
+import dev.aaa1115910.bv.player.entity.sponsorblock.SponsorBlockCategories
 import dev.aaa1115910.bv.player.mobile.VideoSeekBar
 import dev.aaa1115910.bv.player.mobile.noRippleClickable
 import dev.aaa1115910.bv.util.formatHourMinSec
@@ -68,7 +72,9 @@ fun FullscreenControllers(
     onToggleDanmaku: (Boolean) -> Unit,
     onShowDanmakuController: () -> Unit,
     onShowVideoListController: () -> Unit,
-    onOpenMoreMenu: () -> Unit
+    onOpenMoreMenu: () -> Unit,
+    manualSkipTargetSegment: SegmentItem?,
+    onManualSkip: (SegmentItem) -> Unit
 ) {
     val context = LocalContext.current
     val videoPlayerSeekData = LocalVideoPlayerSeekData.current
@@ -106,7 +112,9 @@ fun FullscreenControllers(
             onShowSpeedController = onShowSpeedController,
             onToggleDanmaku = onToggleDanmaku,
             onShowDanmakuController = onShowDanmakuController,
-            onShowVideoListController = onShowVideoListController
+            onShowVideoListController = onShowVideoListController,
+            manualSkipTargetSegment = manualSkipTargetSegment,
+            onManualSkip = onManualSkip
         )
     }
 }
@@ -186,64 +194,79 @@ private fun BottomControllers(
     onShowSpeedController: () -> Unit,
     onToggleDanmaku: (Boolean) -> Unit,
     onShowDanmakuController: () -> Unit,
-    onShowVideoListController: () -> Unit
+    onShowVideoListController: () -> Unit,
+    manualSkipTargetSegment: SegmentItem?,
+    onManualSkip: (SegmentItem) -> Unit
 ) {
+    val sponsorBlockData = LocalVideoPlayerSponsorBlockData.current
     Box(
         modifier = modifier
         //.background(Color.Black.copy(alpha = 0.6f))
     ) {
         Column {
-            VideoSeekBar(
-                modifier = Modifier.padding(bottom = 8.dp),
-                duration = totalTime,
-                position = currentTime,
-                bufferedPercentage = bufferedSeekPosition,
-                playing = isPlaying,
-                onPositionChange = { newPosition, isPressing ->
-                    if (!isPressing) onSeekToPosition(newPosition)
-                }
-            )
+            ConstraintLayout(
+                modifier = Modifier
+                    .padding(top = 8.dp)
+            ) {
+                val (positionTimeText, seekSlider, totalTimeText) = createRefs()
+
+                Text(
+                    modifier = Modifier
+                        .constrainAs(positionTimeText) {
+                            start.linkTo(parent.start)
+                            top.linkTo(parent.top)
+                            bottom.linkTo(parent.bottom)
+                        }
+                        .width(80.dp),
+                    text = currentTime.formatHourMinSec(),
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+                VideoSeekBar(
+                    modifier = Modifier.constrainAs(seekSlider) {
+                        top.linkTo(parent.top)
+                        start.linkTo(positionTimeText.end)
+                        bottom.linkTo(parent.bottom)
+                        end.linkTo(totalTimeText.start)
+                        width = Dimension.preferredWrapContent
+                    },
+                    duration = totalTime,
+                    position = currentTime,
+                    bufferedPercentage = bufferedSeekPosition,
+                    sponsorBlockData = sponsorBlockData,
+                    onPositionChange = { newPosition, isPressing ->
+                        if (!isPressing) onSeekToPosition(newPosition)
+                    }
+                )
+                Text(
+                    modifier = Modifier
+                        .constrainAs(totalTimeText) {
+                            end.linkTo(parent.end)
+                            top.linkTo(parent.top)
+                            bottom.linkTo(parent.bottom)
+                        }
+                        .width(80.dp),
+                    text = totalTime.formatHourMinSec(),
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+            }
 
             ProvideTextStyle(TextStyle(color = Color.White)) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        Modifier.height(48.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        IconButton(
-                            modifier = Modifier
-                                .width(80.dp)
-                                .height(48.dp),
-                            onClick = if (isPlaying) onPause else onPlay,
-                            shape = if (isPlaying) MaterialTheme.shapes.medium else MaterialTheme.shapes.extraLarge,
-                            colors = if (isPlaying) {
-                                iconButtonColors(
-                                    containerColor = Color.Black.copy(0.6f),
-                                    contentColor = Color.White
-                                )
-                            } else {
-                                iconButtonColors(
-                                    containerColor = Color.White,
-                                    contentColor = Color.Black
-                                )
-                            }
-                        ) {
-                            if (isPlaying) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Pause,
-                                    contentDescription = null,
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Rounded.PlayArrow,
-                                    contentDescription = null,
-                                )
-                            }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        PlayPauseButton(
+                            isPlaying = isPlaying,
+                            onPlay = onPlay,
+                            onPause = onPause
+                        )
+                        TextButton(onClick = { onToggleDanmaku(!enabledDanmaku) }) { // Corrected toggle logic
+                            Text(text = "弹幕" + if (enabledDanmaku) "关" else "开")
                         }
                         ControllerButtonGroup {
                             Text(
@@ -285,29 +308,20 @@ private fun BottomControllers(
                                 )
                             }
                         }
+                        manualSkipTargetSegment?.let { segment ->
+                            TextButton(onClick = { onManualSkip(segment) }) {
+                                Text("跳过: ${SponsorBlockCategories.getDisplayName(segment.category)}")
+                            }
+                        }
                     }
 
-                    Row(
-                        Modifier.height(48.dp)
-                    ) {
-                        ControllerButtonGroup {
-                            if (showPartButton) {
-                                TextButton(onClick = onShowVideoListController) {
-                                    Text(text = "选集")
-                                }
-                            }
-                            TextButton(onClick = onShowSpeedController) {
-                                Text(text = "倍速")
-                            }
-                            TextButton(onClick = onShowResolutionController) {
-                                Text(text = currentResolutionName)
-                            }
-                            IconButton(onClick = onExitFullScreen) {
-                                Icon(
-                                    imageVector = Icons.Rounded.FullscreenExit,
-                                    contentDescription = null,
-                                    tint = Color.White
-                                )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(onClick = { /*TODO: Implement Subtitle Menu*/ }) {
+                            Text(text = "字幕")
+                        }
+                        if (showPartButton) {
+                            TextButton(onClick = onShowVideoListController) {
+                                Text(text = "选集")
                             }
                         }
                     }

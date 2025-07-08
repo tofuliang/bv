@@ -23,11 +23,15 @@ import dev.aaa1115910.bv.player.entity.DanmakuType
 import dev.aaa1115910.bv.player.entity.PlayMode
 import dev.aaa1115910.bv.player.entity.Resolution
 import dev.aaa1115910.bv.player.entity.VideoCodec
+import dev.aaa1115910.bv.player.entity.sponsorblock.SponsorBlockActionType
+import dev.aaa1115910.bv.player.entity.sponsorblock.SponsorBlockCategories
+import dev.aaa1115910.bv.player.entity.sponsorblock.SponsorBlockColors
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import java.util.Date
 import java.util.UUID
 import kotlin.math.roundToInt
@@ -139,6 +143,19 @@ object Prefs {
                 PrefKeys.prefDefaultDanmakuTypesKey,
                 value.map { it.ordinal }.joinToString(",")
             )
+        }
+    var upperList: List<String>
+        get() = runBlocking {
+            val upperListString =
+                dsm.getPreferenceFlow(PrefKeys.prefDefaultUpperListRequest).first()
+            if (upperListString == "") {
+                emptyList()
+            } else {
+                upperListString.split(",")
+            }
+        }
+        set(value) = runBlocking {
+            dsm.editPreference(PrefKeys.prefDefaultUpperListKey, value.joinToString(","))
         }
 
     var defaultDanmakuArea: Float
@@ -319,6 +336,47 @@ object Prefs {
             PlayMode.entries[dsm.getPreferenceFlow(PrefKeys.prefPlayModeRequest).first()]
         }
         set(value) = runBlocking { dsm.editPreference(PrefKeys.prefPlayModeKey, value.ordinal) }
+
+    var enableSponsorBlock: Boolean
+        get() = runBlocking {
+            dsm.getPreferenceFlow(PrefKeys.prefEnableSponsorBlockRequest).first()
+        }
+        set(value) = runBlocking { dsm.editPreference(PrefKeys.prefEnableSponsorBlockKey, value) }
+
+    var sponsorBlockUserActions: Map<String, SponsorBlockActionType>
+        get() = runCatching {
+            val jsonString = runBlocking {
+                dsm.getPreferenceFlow(PrefKeys.prefSponsorBlockUserActionsRequest).first()
+            }
+            if (jsonString.isNotEmpty()) {
+                Json.decodeFromString<Map<String, SponsorBlockActionType>>(jsonString)
+            } else {
+                logger.error { "Failed to parse sponsorBlockUserActions from JSON: $jsonString" }
+                SponsorBlockCategories.DEFAULT_ACTIONS
+            }
+        }.getOrDefault(SponsorBlockCategories.DEFAULT_ACTIONS)
+        set(value) = runBlocking {
+            val jsonString = Json.encodeToString(value)
+            dsm.editPreference(PrefKeys.prefSponsorBlockUserActionsKey, jsonString)
+        }
+
+    var sponsorBlockUserColors: Map<String, String> // Category to HEX Color String
+        get() =
+            runCatching {
+                val jsonString = runBlocking {
+                    dsm.getPreferenceFlow(PrefKeys.prefSponsorBlockUserColorsRequest).first()
+                }
+                if (jsonString.isNotEmpty()) {
+                    Json.decodeFromString<Map<String, String>>(jsonString)
+                } else {
+                    logger.error { "Failed to parse sponsorBlockUserColors from JSON: $jsonString" }
+                    SponsorBlockColors.DefaultCategoryColorsHex
+                }
+            }.getOrDefault(SponsorBlockColors.DefaultCategoryColorsHex)
+        set(value) = runBlocking {
+            val jsonString = Json.encodeToString(value)
+            dsm.editPreference(PrefKeys.prefSponsorBlockUserColorsKey, jsonString)
+        }
 }
 
 object PrefKeys {
@@ -338,6 +396,7 @@ object PrefKeys {
     val prefDefaultDanmakuOpacityKey = floatPreferencesKey("ddo")
     val prefDefaultDanmakuEnabledKey = booleanPreferencesKey("dde")
     val prefDefaultDanmakuTypesKey = stringPreferencesKey("ddts")
+    val prefDefaultUpperListKey = stringPreferencesKey("upl")
     val prefDefaultDanmakuAreaKey = floatPreferencesKey("dda")
     val prefDefaultVideoCodecKey = intPreferencesKey("dvc")
     val prefEnabledFirebaseCollectionKey = booleanPreferencesKey("efc")
@@ -365,6 +424,9 @@ object PrefKeys {
     val prefBlacklistUserKey = booleanPreferencesKey("blacklist_user")
     val prefThemeTypeKey = intPreferencesKey("theme_type")
     val prefPlayModeKey = intPreferencesKey("play_mode")
+    val prefEnableSponsorBlockKey = booleanPreferencesKey("enable_sponsor_block")
+    val prefSponsorBlockUserActionsKey = stringPreferencesKey("sb_user_actions")
+    val prefSponsorBlockUserColorsKey = stringPreferencesKey("sb_user_colors")
 
     val prefIsLoginRequest = PreferenceRequest(prefIsLoginKey, false)
     val prefUidRequest = PreferenceRequest(prefUidKey, 0)
@@ -384,6 +446,8 @@ object PrefKeys {
     val prefDefaultDanmakuEnabledRequest = PreferenceRequest(prefDefaultDanmakuEnabledKey, true)
     val prefDefaultDanmakuTypesRequest =
         PreferenceRequest(prefDefaultDanmakuTypesKey, "0,1,2,3")
+    val prefDefaultUpperListRequest =
+        PreferenceRequest(prefDefaultUpperListKey, "")
     val prefDefaultDanmakuAreaRequest = PreferenceRequest(prefDefaultDanmakuAreaKey, 1f)
     val prefDefaultVideoCodecRequest =
         PreferenceRequest(prefDefaultVideoCodecKey, VideoCodec.AVC.ordinal)
@@ -423,4 +487,12 @@ object PrefKeys {
     val prefBlacklistUserRequest = PreferenceRequest(prefBlacklistUserKey, false)
     val prefThemeTypeRequest = PreferenceRequest(prefThemeTypeKey, ThemeType.Auto.ordinal)
     val prefPlayModeRequest = PreferenceRequest(prefPlayModeKey, PlayMode.Sequential.ordinal)
+    val prefEnableSponsorBlockRequest = PreferenceRequest(prefEnableSponsorBlockKey, false)
+    val prefSponsorBlockUserActionsRequest = PreferenceRequest(
+        prefSponsorBlockUserActionsKey, Json.encodeToString(SponsorBlockCategories.DEFAULT_ACTIONS)
+    )
+    val prefSponsorBlockUserColorsRequest = PreferenceRequest(
+        prefSponsorBlockUserColorsKey,
+        Json.encodeToString(SponsorBlockColors.DefaultCategoryColorsHex)
+    )
 }

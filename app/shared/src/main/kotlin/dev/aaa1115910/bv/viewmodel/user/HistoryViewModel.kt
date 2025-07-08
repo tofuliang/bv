@@ -10,10 +10,10 @@ import androidx.lifecycle.viewModelScope
 import dev.aaa1115910.biliapi.http.entity.AuthFailureException
 import dev.aaa1115910.biliapi.repositories.HistoryRepository
 import dev.aaa1115910.bv.BVApp
-import dev.aaa1115910.bv.BuildConfig
 import dev.aaa1115910.bv.R
 import dev.aaa1115910.bv.entity.carddata.VideoCardData
 import dev.aaa1115910.bv.repository.UserRepository
+import dev.aaa1115910.bv.BuildConfig
 import dev.aaa1115910.bv.util.Prefs
 import dev.aaa1115910.bv.util.addWithMainContext
 import dev.aaa1115910.bv.util.fInfo
@@ -35,6 +35,9 @@ class HistoryViewModel(
         private val logger = KotlinLogging.logger { }
     }
 
+    private val upperList = mutableStateListOf<String>().apply {
+        addAll(Prefs.upperList)
+    }
     var histories = mutableStateListOf<VideoCardData>()
     var noMore by mutableStateOf(false)
 
@@ -58,20 +61,22 @@ class HistoryViewModel(
             )
 
             data.data.forEach { historyItem ->
-                histories.addWithMainContext(
-                    VideoCardData(
-                        avid = historyItem.oid,
-                        title = historyItem.title,
-                        cover = historyItem.cover,
-                        upName = historyItem.author,
-                        timeString = if (historyItem.progress == -1) context.getString(R.string.play_time_finish)
-                        else context.getString(
-                            R.string.play_time_history,
-                            (historyItem.progress * 1000L).formatHourMinSec(),
-                            (historyItem.duration * 1000L).formatHourMinSec()
+                if (!BuildConfig.RESTRICTED || upperList.contains(historyItem.author)) {
+                    histories.addWithMainContext(
+                        VideoCardData(
+                            avid = historyItem.oid,
+                            title = historyItem.title,
+                            cover = historyItem.cover,
+                            upName = historyItem.author,
+                            timeString = if (historyItem.progress == -1) context.getString(R.string.play_time_finish)
+                            else context.getString(
+                                R.string.play_time_history,
+                                (historyItem.progress * 1000L).formatHourMinSec(),
+                                (historyItem.duration * 1000L).formatHourMinSec()
+                            )
                         )
                     )
-                )
+                }
             }
             //update cursor
             cursor = data.cursor

@@ -1,23 +1,21 @@
 @file:Suppress("UnstableApiUsage")
 
 import com.android.build.gradle.internal.api.ApkVariantOutputImpl
-import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.io.FileInputStream
 import java.util.Properties
 
 plugins {
     alias(gradleLibs.plugins.android.application)
     alias(gradleLibs.plugins.compose.compiler)
-    alias(gradleLibs.plugins.firebase.crashlytics)
     alias(gradleLibs.plugins.google.ksp)
-    alias(gradleLibs.plugins.google.services) apply false
+//    alias(gradleLibs.plugins.google.services) apply false
     alias(gradleLibs.plugins.kotlin.android)
     alias(gradleLibs.plugins.kotlin.serialization)
 }
 
-if (AppConfiguration.googleServicesAvailable) {
-    apply(plugin = gradleLibs.plugins.google.services.get().pluginId)
-}
+//if (AppConfiguration.googleServicesAvailable) {
+//    apply(plugin = gradleLibs.plugins.google.services.get().pluginId)
+//}
 
 
 val signingProp = file(project.rootProject.file("signing.properties"))
@@ -54,6 +52,10 @@ android {
     flavorDimensions.add("channel")
 
     productFlavors {
+        create("restricted") {
+            dimension = "channel"
+            applicationId = "dev.aaa1115910.bv.restricted"
+        }
         create("lite") {
             dimension = "channel"
         }
@@ -70,9 +72,6 @@ android {
                 "proguard-rules.pro"
             )
             if (signingProp.exists()) signingConfig = signingConfigs.getByName("key")
-            configure<CrashlyticsExtension> {
-                mappingFileUploadEnabled = AppConfiguration.googleServicesAvailable
-            }
         }
         debug {
             isMinifyEnabled = false
@@ -81,9 +80,6 @@ android {
                 "proguard-rules.pro"
             )
             applicationIdSuffix = ".debug"
-            configure<CrashlyticsExtension> {
-                mappingFileUploadEnabled = false
-            }
         }
         create("r8Test") {
             isMinifyEnabled = true
@@ -93,9 +89,6 @@ android {
             )
             applicationIdSuffix = ".r8test"
             if (signingProp.exists()) signingConfig = signingConfigs.getByName("key")
-            configure<CrashlyticsExtension> {
-                mappingFileUploadEnabled = false
-            }
         }
         create("alpha") {
             isMinifyEnabled = true
@@ -104,15 +97,12 @@ android {
                 "proguard-rules.pro"
             )
             if (signingProp.exists()) signingConfig = signingConfigs.getByName("key")
-            configure<CrashlyticsExtension> {
-                mappingFileUploadEnabled = AppConfiguration.googleServicesAvailable
-            }
         }
     }
 
     buildFeatures {
         compose = true
-        //buildConfig = true
+        buildConfig = false
     }
 
     packaging {
@@ -130,16 +120,14 @@ android {
         }
     }
 
-    /*splits {
-        if (gradle.startParameter.taskNames.find { it.startsWith("assembleDefault") } != null) {
-            abi {
-                isEnable = true
-                reset()
-                include("x86_64", "x86", "arm64-v8a", "armeabi-v7a")
-                isUniversalApk = true
-            }
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("x86_64", "x86", "arm64-v8a", "armeabi-v7a")
+            isUniversalApk = true
         }
-    }*/
+    }
 
     applicationVariants.configureEach {
         val variant = this
@@ -169,7 +157,7 @@ java {
 }
 
 dependencies {
-    implementation(project(":app:mobile"))
+    // implementation(project(":app:mobile"))  // 移除mobile模块，构建纯TV版
     implementation(project(":app:tv"))
 }
 

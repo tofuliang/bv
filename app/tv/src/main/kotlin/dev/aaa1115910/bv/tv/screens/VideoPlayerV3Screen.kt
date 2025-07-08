@@ -14,6 +14,7 @@ import dev.aaa1115910.bv.player.entity.LocalVideoPlayerLoadStateData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerLogsData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerPaymentData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSeekThumbData
+import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSponsorBlockData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerVideoInfoData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerVideoShotData
 import dev.aaa1115910.bv.player.entity.VideoListItemData
@@ -24,6 +25,7 @@ import dev.aaa1115910.bv.player.entity.VideoPlayerLoadStateData
 import dev.aaa1115910.bv.player.entity.VideoPlayerLogsData
 import dev.aaa1115910.bv.player.entity.VideoPlayerPaymentData
 import dev.aaa1115910.bv.player.entity.VideoPlayerSeekThumbData
+import dev.aaa1115910.bv.player.entity.VideoPlayerSponsorBlockData
 import dev.aaa1115910.bv.player.entity.VideoPlayerVideoInfoData
 import dev.aaa1115910.bv.player.entity.VideoPlayerVideoShotData
 import dev.aaa1115910.bv.player.tv.BvPlayer
@@ -102,11 +104,23 @@ fun VideoPlayerV3Screen(
         LocalVideoPlayerVideoShotData provides VideoPlayerVideoShotData(
             videoShot = playerViewModel.videoShot,
         ),
+        LocalVideoPlayerSponsorBlockData provides VideoPlayerSponsorBlockData(
+            segments = playerViewModel.sponsorBlockSegments,
+            userActions = playerViewModel.sponsorBlockUserActions,
+            isEnabled = Prefs.enableSponsorBlock,
+            showSkipToast = playerViewModel.showSkipToast,
+            skipToastMessage = playerViewModel.skipToastMessage,
+            skipToastType = playerViewModel.skipToastType,
+            skipToastConfirmProgress = playerViewModel.skipToastConfirmProgress,
+            showResultToast = playerViewModel.showResultToast,
+            resultToastMessage = playerViewModel.resultToastMessage
+        )
     ) {
         BvPlayer(
             modifier = modifier.fillMaxSize(),
             videoPlayer = playerViewModel.videoPlayer!!,
             danmakuPlayer = playerViewModel.danmakuPlayer,
+            sponsorBlockManager = playerViewModel,
             onSendHeartbeat = playerViewModel::uploadHistory,
             onClearBackToHistoryData = { playerViewModel.lastPlayed = 0 },
             onLoadNextVideo = playerViewModel::playNextVideo,
@@ -194,6 +208,9 @@ fun VideoPlayerV3Screen(
             onPlayModeChange = { playMode ->
                 Prefs.defaultPlayMode = playMode
                 playerViewModel.currentPlayMode = playMode
+            },
+            onSponsorBlockToastConfirm = { confirmProgress ->
+                playerViewModel.skipToastConfirmProgress = confirmProgress
             }
         )
     }

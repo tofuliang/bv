@@ -8,7 +8,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.aaa1115910.biliapi.http.BiliHttpApi
+import dev.aaa1115910.bv.BuildConfig
 import dev.aaa1115910.bv.entity.carddata.VideoCardData
+import dev.aaa1115910.bv.util.Prefs
 import dev.aaa1115910.bv.util.addWithMainContext
 import dev.aaa1115910.bv.util.fInfo
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -22,6 +24,9 @@ class TagViewModel : ViewModel() {
         private val logger = KotlinLogging.logger { }
     }
 
+    private val upperList = mutableStateListOf<String>().apply {
+        addAll(Prefs.upperList)
+    }
     var tagName by mutableStateOf("")
     var tagId by mutableIntStateOf(0)
     var topVideos = mutableStateListOf<VideoCardData>()
@@ -56,17 +61,19 @@ class TagViewModel : ViewModel() {
             val videoList = response.data
             if (videoList.isEmpty()) noMore = true
             videoList.forEach { tagVideoItem ->
-                topVideos.addWithMainContext(
-                    VideoCardData(
-                        avid = tagVideoItem.aid,
-                        title = tagVideoItem.title,
-                        cover = tagVideoItem.pic,
-                        upName = tagVideoItem.owner.name,
-                        play = tagVideoItem.stat.view,
-                        danmaku = tagVideoItem.stat.danmaku,
-                        time = tagVideoItem.duration.toLong()
+                if (!BuildConfig.RESTRICTED || upperList.contains(tagVideoItem.owner.name)) {
+                    topVideos.addWithMainContext(
+                        VideoCardData(
+                            avid = tagVideoItem.aid,
+                            title = tagVideoItem.title,
+                            cover = tagVideoItem.pic,
+                            upName = tagVideoItem.owner.name,
+                            play = tagVideoItem.stat.view,
+                            danmaku = tagVideoItem.stat.danmaku,
+                            time = tagVideoItem.duration.toLong()
+                        )
                     )
-                )
+                }
             }
             logger.fInfo { "Update tag top videos success" }
         }.onFailure {

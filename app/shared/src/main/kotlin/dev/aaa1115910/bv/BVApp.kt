@@ -64,7 +64,7 @@ class BVApp : Application() {
             androidContext(this@BVApp)
             modules(AppModule().module)
         }
-        initFirebase()
+//        initFirebase()
         LogCatcherUtil.installLogCatcher()
         initApiConfig()
         initRepository()
@@ -72,7 +72,7 @@ class BVApp : Application() {
         instance = this
         updateMigration()
         HttpServer.startServer()
-        updateBlacklist()
+//        updateBlacklist()
     }
 
     private fun initFirebase() {

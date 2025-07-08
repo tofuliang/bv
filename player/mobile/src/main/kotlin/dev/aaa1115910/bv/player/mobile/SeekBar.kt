@@ -5,30 +5,14 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -41,6 +25,8 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import dev.aaa1115910.bv.player.entity.VideoPlayerSponsorBlockData
+import dev.aaa1115910.bv.player.seekbar.SeekBar
 import dev.aaa1115910.bv.player.seekbar.SeekBarThumb
 import dev.aaa1115910.bv.player.seekbar.SeekMoveState
 import dev.aaa1115910.bv.player.seekbar.WavySeekBar
@@ -56,6 +42,7 @@ fun VideoSeekBar(
     bufferedPercentage: Int,
     playing: Boolean,
     colors: SliderColors = SliderDefaults.colors(),
+    sponsorBlockData: VideoPlayerSponsorBlockData = VideoPlayerSponsorBlockData(),
     thumb: (@Composable (Modifier, SeekMoveState?) -> Unit)? = null,
     onPositionChange: ((position: Long, pressing: Boolean) -> Unit)? = null
 ) {
@@ -123,7 +110,8 @@ fun VideoSeekBar(
             bufferedPercentage = bufferedPercentage,
             waving = playing,
             showThumb = thumb == null,
-            colors = colors
+            colors = colors,
+            sponsorBlockData = sponsorBlockData // Pass to shared SeekBar
         )
         Box(modifier = Modifier.fillMaxWidth()) {
             val thumbModifier = Modifier
@@ -164,6 +152,7 @@ private fun DraggableSeekPreview() {
                     duration = duration,
                     position = position,
                     bufferedPercentage = bufferedPercentage,
+                    sponsorBlockData = VideoPlayerSponsorBlockData(), // For preview
                     thumb = { modifier, seekMoveState ->
                         if (!view.isInEditMode) {
                             SeekBarThumb(

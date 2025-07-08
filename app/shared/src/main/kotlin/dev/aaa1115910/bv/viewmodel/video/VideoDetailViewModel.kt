@@ -13,7 +13,9 @@ import dev.aaa1115910.bv.player.entity.VideoListPart
 import dev.aaa1115910.bv.player.entity.VideoListUgcEpisode
 import dev.aaa1115910.bv.player.entity.VideoListUgcEpisodeTitle
 import dev.aaa1115910.bv.repository.VideoInfoRepository
+import dev.aaa1115910.bv.BuildConfig
 import dev.aaa1115910.bv.util.Prefs
+import dev.aaa1115910.bv.util.Prefs.upperList
 import dev.aaa1115910.bv.util.fInfo
 import dev.aaa1115910.bv.util.swapListWithMainContext
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -83,7 +85,13 @@ class VideoDetailViewModel(
                 epId = it.epid
             )
         } ?: emptyList()
-        relatedVideos.swapListWithMainContext(relateVideoCardDataList)
+        if (BuildConfig.RESTRICTED) {
+            relatedVideos.swapListWithMainContext(relateVideoCardDataList.filter {
+                upperList.contains(it.upName)
+            })
+        } else {
+            relatedVideos.swapListWithMainContext(relateVideoCardDataList)
+        }
         logger.fInfo { "Update ${relateVideoCardDataList.size} relate videos" }
     }
 

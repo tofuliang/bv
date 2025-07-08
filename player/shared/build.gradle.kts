@@ -2,6 +2,7 @@ plugins {
     alias(gradleLibs.plugins.android.library)
     alias(gradleLibs.plugins.compose.compiler)
     alias(gradleLibs.plugins.kotlin.android)
+    alias(gradleLibs.plugins.kotlin.serialization)
 }
 
 android {
@@ -13,6 +14,20 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+    }
+
+    flavorDimensions.add(FlavorConfiguration.FLAVOR_DIMENSION)
+
+    productFlavors {
+        create(FlavorConfiguration.FLAVOR_RESTRICTED) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+        }
+        create(FlavorConfiguration.FLAVOR_LITE) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+        }
+        create(FlavorConfiguration.FLAVOR_DEFAULT) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+        }
     }
 
     buildTypes {
@@ -73,6 +88,7 @@ dependencies {
     implementation(androidx.compose.ui.tooling.preview)
     implementation(androidx.compose.ui.util)
     implementation(libs.androidSvg)
+    implementation(libs.kotlinx.serialization)
     implementation(libs.logging)
     implementation(libs.lottie)
     implementation(libs.material)

@@ -5,7 +5,7 @@ plugins {
     alias(gradleLibs.plugins.compose.compiler)
     alias(gradleLibs.plugins.google.ksp)
     alias(gradleLibs.plugins.google.protobuf)
-    alias(gradleLibs.plugins.google.services) apply false
+//    alias(gradleLibs.plugins.google.services) apply false
     alias(gradleLibs.plugins.kotlin.android)
     alias(gradleLibs.plugins.kotlin.serialization)
 }
@@ -41,6 +41,34 @@ android {
                 name = "BLACKLIST_URL",
                 value = "\"${AppConfiguration.blacklistUrl}\""
             )
+            // SponsorBlock Config
+            buildConfigField(
+                type = "String",
+                name = "SPONSOR_BLOCK_API_ORIGIN",
+                value = "\"${AppConfiguration.appId}.sponsorblock\""
+            )
+            buildConfigField(
+                type = "String",
+                name = "SPONSOR_BLOCK_EXT_VERSION",
+                value = "\"0.1.0\"" // Initial version for this integration
+            )
+        }
+    }
+
+    flavorDimensions.add(FlavorConfiguration.FLAVOR_DIMENSION)
+
+    productFlavors {
+        create(FlavorConfiguration.FLAVOR_RESTRICTED) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+            buildConfigField("boolean", FlavorConfiguration.BUILD_CONFIG_RESTRICTED, "true")
+        }
+        create(FlavorConfiguration.FLAVOR_LITE) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+            buildConfigField("boolean", FlavorConfiguration.BUILD_CONFIG_RESTRICTED, "false")
+        }
+        create(FlavorConfiguration.FLAVOR_DEFAULT) {
+            dimension = FlavorConfiguration.FLAVOR_DIMENSION
+            buildConfigField("boolean", FlavorConfiguration.BUILD_CONFIG_RESTRICTED, "false")
         }
     }
 
@@ -155,6 +183,7 @@ dependencies {
     api(libs.rememberPreference)
     api(libs.slf4j.android.mvysny)
     api(libs.zxing)
+    api("com.google.code.gson:gson:2.10.1")
     api(project(mapOf("path" to ":bili-api")))
     api(project(mapOf("path" to ":bili-subtitle")))
     api(project(mapOf("path" to ":player")))
@@ -162,6 +191,7 @@ dependencies {
     api(project(mapOf("path" to ":symbols")))
     testImplementation(androidx.room.testing)
     testImplementation(libs.kotlin.test)
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     androidTestImplementation(androidx.compose.ui.test.junit4)
     debugApi(androidx.compose.ui.test.manifest)
     debugApi(androidx.compose.ui.tooling)

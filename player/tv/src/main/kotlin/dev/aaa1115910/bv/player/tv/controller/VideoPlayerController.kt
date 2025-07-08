@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -19,11 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -37,14 +34,17 @@ import dev.aaa1115910.bv.player.entity.DanmakuType
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerDebugInfoData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerHistoryData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSeekData
+import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSponsorBlockData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerStateData
 import dev.aaa1115910.bv.player.entity.PlayMode
 import dev.aaa1115910.bv.player.entity.Resolution
+import dev.aaa1115910.bv.player.entity.SkipToastType
+import dev.aaa1115910.bv.player.entity.SponsorBlockManager
 import dev.aaa1115910.bv.player.entity.VideoAspectRatio
 import dev.aaa1115910.bv.player.entity.VideoCodec
 import dev.aaa1115910.bv.player.entity.VideoListItem
 import dev.aaa1115910.bv.player.seekbar.SeekMoveState
-import dev.aaa1115910.bv.player.shared.BuildConfig
+import dev.aaa1115910.bv.player.tv.BuildConfig
 import dev.aaa1115910.bv.player.shared.R
 import dev.aaa1115910.bv.util.countDownTimer
 import dev.aaa1115910.bv.util.fInfo
@@ -55,6 +55,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 fun VideoPlayerController(
     modifier: Modifier = Modifier,
     videoPlayer: AbstractVideoPlayer,
+    sponsorBlockManager: SponsorBlockManager? = null,
 
     //player events
     onPlay: () -> Unit,
@@ -81,6 +82,8 @@ fun VideoPlayerController(
     onSubtitleBottomPadding: (Dp) -> Unit,
     onPlayModeChange: (PlayMode) -> Unit,
 
+    onSponsorBlockToastConfirm: (Float) -> Unit,
+
     onRequestFocus: () -> Unit,
     content: @Composable BoxScope.() -> Unit
 ) {
@@ -89,6 +92,7 @@ fun VideoPlayerController(
     val videoPlayerHistoryData = LocalVideoPlayerHistoryData.current
     val videoPlayerStateData = LocalVideoPlayerStateData.current
     val videoPlayerDebugInfoData = LocalVideoPlayerDebugInfoData.current
+    val sponsorBlockData = LocalVideoPlayerSponsorBlockData.current
     val logger = KotlinLogging.logger {}
 
     var showListController by remember { mutableStateOf(false) }
@@ -107,9 +111,56 @@ fun VideoPlayerController(
 
     var hideVideoInfoTimer: CountDownTimer? by remember { mutableStateOf(null) }
 
+    var directionDownLongPressHandled by remember { mutableStateOf(false) }
+    var sponsorBlockConfirmProgress by remember { mutableFloatStateOf(0f) }
+
+    //LaunchedEffect(
+    //    videoPlayerSeekData.position,
+    //    sponsorBlockData.segments,
+    //    videoPlayerStateData.isPlaying,
+    //    sponsorBlockManager?.isUserDraggingSeekBar
+    //) {
+    //    if (!videoPlayerStateData.isPlaying || !sponsorBlockData.isEnabled || (sponsorBlockManager?.isUserDraggingSeekBar == true)) {
+    //        println("Skipping sponsor block check due to player state or user interaction")
+    //        return@LaunchedEffect
+    //    }
+//
+    //    //println("Checking for sponsor block segments at position: ${videoPlayerSeekData.position}")
+//
+    //    val currentPos = videoPlayerSeekData.position
+    //    var foundSegment: SegmentItem? = null
+    //    for (segment in sponsorBlockData.segments) {
+    //        //println("Checking segment: ${segment.category} from ${segment.startTimeMillis} to ${segment.endTimeMillis}")
+    //        if (currentPos > segment.startTimeMillis && currentPos < segment.endTimeMillis) {
+    //            val action = sponsorBlockData.getActionFor(segment)
+    //            if (action == SponsorBlockActionType.MANUAL_SKIP && segment.actionType == "skip") {
+    //                foundSegment = segment
+    //                break
+    //            }
+    //        }
+    //    }
+    //}
+
     val openSeekController = {
-        if (!showSeekController) goTime = videoPlayerSeekData.position
+        if (!showSeekController) {
+            goTime = videoPlayerSeekData.position
+            sponsorBlockManager?.onUserDragSeekBarStart() // User starts seeking
+            // Hide skip toast when user starts seeking
+            if (sponsorBlockData.showSkipToast) {
+                sponsorBlockManager?.hideSkipToast()
+            }
+        }
         showSeekController = true
+    }
+
+    val closeSeekControllerAndSeek = { seekToTime: Long ->
+        showSeekController = false
+        onGoTime(seekToTime) // This will call videoPlayer.seekTo
+        sponsorBlockManager?.onUserDragSeekBarStop(
+            seekToTime,
+            videoPlayerSeekData.duration,
+            videoPlayerStateData.isPlaying
+        ) // User stops seeking
     }
 
     val calCoefficient = {
@@ -168,7 +219,14 @@ fun VideoPlayerController(
                             Key.DirectionUp
                         ).contains(it.key)
                     ) {
-                        if (it.type != KeyEventType.KeyDown) showSeekController = false
+                        if (it.type != KeyEventType.KeyDown) {
+                            showSeekController = false
+                            sponsorBlockManager?.onUserDragSeekBarStop(
+                                videoPlayerSeekData.position,
+                                videoPlayerSeekData.duration,
+                                videoPlayerStateData.isPlaying
+                            )
+                        }
                         onRequestFocus()
                         return@onPreviewKeyEvent true
                     }
@@ -185,10 +243,10 @@ fun VideoPlayerController(
 
                         if (showSeekController) {
                             if (it.type == KeyEventType.KeyDown) return@onPreviewKeyEvent true
-                            onGoTime(goTime)
+                            closeSeekControllerAndSeek(goTime) // Use new method
                             if (!videoPlayer.isPlaying) onPlay()
                             moveState = SeekMoveState.Idle
-                            showSeekController = false
+                            // showSeekController = false // handled by closeSeekControllerAndSeek
                             return@onPreviewKeyEvent true
                         }
 
@@ -219,8 +277,45 @@ fun VideoPlayerController(
                     }
 
                     Key.DirectionDown -> {
+                        if (it.nativeKeyEvent.isLongPress || it.nativeKeyEvent.repeatCount > 0) {
+                            logger.info { "[${it.key} long press], repeat: ${it.nativeKeyEvent.repeatCount}" }
+                            val requiredRepeatCount = 16
+                            val newProgress =
+                                it.nativeKeyEvent.repeatCount.toFloat() / requiredRepeatCount
+                            sponsorBlockConfirmProgress = newProgress.coerceIn(0f..1f)
+                            onSponsorBlockToastConfirm(sponsorBlockConfirmProgress)
+                            if (newProgress == 1f) {
+                                if (sponsorBlockData.showSkipToast) {
+                                    when (sponsorBlockData.skipToastType) {
+                                        SkipToastType.AUTO_SKIP -> {
+                                            sponsorBlockManager?.cancelSkip()
+                                            sponsorBlockManager?.hideSkipToast()
+                                        }
+
+                                        SkipToastType.MANUAL_SKIP -> {
+                                            sponsorBlockManager?.triggerManualSkip()
+                                            // Don't call hideSkipToast() here for MANUAL_SKIP
+                                            // triggerManualSkip() will handle toast visibility appropriately
+                                        }
+                                    }
+                                }
+                            }
+
+                            directionDownLongPressHandled = true
+                            return@onPreviewKeyEvent true
+                        }
+
+                        if (it.type == KeyEventType.KeyUp && directionDownLongPressHandled) {
+                            if (sponsorBlockConfirmProgress < 1f) {
+                                onSponsorBlockToastConfirm(0f)
+                            }
+                            directionDownLongPressHandled = false
+                            return@onPreviewKeyEvent true
+                        }
+
                         if (it.type == KeyEventType.KeyDown) return@onPreviewKeyEvent true
                         logger.info { "[${it.key} press]" }
+
                         showInfo = !showInfo
                         if (showInfo) {
                             hideVideoInfoTimer = countDownTimer(3000, 1000, "hideVideoInfoTimer") {
@@ -341,6 +436,7 @@ fun VideoPlayerController(
             goTime = goTime,
             moveState = moveState
         )
+
         VideoListController(
             show = showListController,
             onPlayNewVideo = onPlayNewVideo
@@ -363,6 +459,9 @@ fun VideoPlayerController(
             onSubtitleBottomPadding = onSubtitleBottomPadding,
             onPlayModeChange = onPlayModeChange
         )
+
+        SponsorBlockSkipToast()
+        SponsorBlockResultToast()
     }
 }
 

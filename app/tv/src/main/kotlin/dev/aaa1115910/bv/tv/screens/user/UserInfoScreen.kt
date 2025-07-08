@@ -127,7 +127,11 @@ fun UserInfoScreen(
     val histories = remember { mutableStateListOf<VideoCardData>() }
     val animes = remember { mutableStateListOf<SeasonCardData>() }
     val favorites = remember { mutableStateListOf<VideoCardData>() }
-
+    val upperList = remember {
+        mutableStateListOf<String>().apply {
+            addAll(Prefs.upperList)
+        }
+    }
     val updateHistories = {
         scope.launch(Dispatchers.IO) {
             runCatching {
@@ -137,20 +141,22 @@ fun UserInfoScreen(
                 )
                 histories.clear()
                 data.data.forEach { historyItem ->
-                    histories.add(
-                        VideoCardData(
-                            avid = historyItem.oid,
-                            title = historyItem.title,
-                            cover = historyItem.cover,
-                            upName = historyItem.author,
-                            timeString = if (historyItem.progress == -1) context.getString(R.string.play_time_finish)
-                            else context.getString(
-                                R.string.play_time_history,
-                                (historyItem.progress * 1000L).formatHourMinSec(),
-                                (historyItem.duration * 1000L).formatHourMinSec()
+                    if (!BuildConfig.RESTRICTED || upperList.contains(historyItem.author)) {
+                        histories.add(
+                            VideoCardData(
+                                avid = historyItem.oid,
+                                title = historyItem.title,
+                                cover = historyItem.cover,
+                                upName = historyItem.author,
+                                timeString = if (historyItem.progress == -1) context.getString(R.string.play_time_finish)
+                                else context.getString(
+                                    R.string.play_time_history,
+                                    (historyItem.progress * 1000L).formatHourMinSec(),
+                                    (historyItem.duration * 1000L).formatHourMinSec()
+                                )
                             )
                         )
-                    )
+                    }
                 }
             }.onFailure {
                 logger.fWarn { "Load recent videos failed: ${it.stackTraceToString()}" }
@@ -233,15 +239,17 @@ fun UserInfoScreen(
                 ).medias
                 favorites.clear()
                 favoriteItems.forEach { favoriteItem ->
-                    favorites.add(
-                        VideoCardData(
-                            avid = favoriteItem.id,
-                            title = favoriteItem.title,
-                            cover = favoriteItem.cover,
-                            upName = favoriteItem.upper.name,
-                            time = favoriteItem.duration.toLong() * 1000
+                    if (!BuildConfig.RESTRICTED || upperList.contains(favoriteItem.upper.name)) {
+                        favorites.add(
+                            VideoCardData(
+                                avid = favoriteItem.id,
+                                title = favoriteItem.title,
+                                cover = favoriteItem.cover,
+                                upName = favoriteItem.upper.name,
+                                time = favoriteItem.duration.toLong() * 1000
+                            )
                         )
-                    )
+                    }
                 }
             }.onFailure {
                 logger.fWarn { "Load favorite items failed: ${it.stackTraceToString()}" }
