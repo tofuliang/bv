@@ -35,7 +35,7 @@ fun SeekController(
     modifier: Modifier = Modifier,
     show: Boolean,
     goTime: Long,
-    moveState: SeekMoveState
+    moveState: SeekMoveState,
 ) {
     val videoPlayerVideoShotData = LocalVideoPlayerVideoShotData.current
     val videoPlayerSeekData = LocalVideoPlayerSeekData.current

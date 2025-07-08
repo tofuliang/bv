@@ -98,6 +98,7 @@ import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSeekThumbData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSponsorBlockData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerVideoInfoData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerVideoShotData
+import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSponsorBlockData
 import dev.aaa1115910.bv.player.entity.VideoListPart
 import dev.aaa1115910.bv.player.entity.VideoListPgcEpisode
 import dev.aaa1115910.bv.player.entity.VideoListUgcEpisode
@@ -398,6 +399,7 @@ fun VideoPlayerScreen(
                                 playerViewModel.loadPlayUrl(
                                     avid = aid,
                                     cid = cid,
+                                    bvid = videoDetailViewModel.videoDetail?.bvid,
                                     epid = epid,
                                     seasonId = seasonId,
                                     continuePlayNext = true
@@ -482,6 +484,7 @@ fun VideoPlayerScreen(
                                                         playerViewModel.loadPlayUrl(
                                                             avid = videoDetailViewModel.videoDetail!!.aid,
                                                             cid = videoPage.cid,
+                                                            bvid = videoDetailViewModel.videoDetail!!.bvid,
                                                             continuePlayNext = true
                                                         )
                                                     },
@@ -492,6 +495,7 @@ fun VideoPlayerScreen(
                                                         playerViewModel.loadPlayUrl(
                                                             avid = episode.aid,
                                                             cid = episode.cid,
+                                                            bvid = videoDetailViewModel.videoDetail?.bvid,
                                                             epid = episode.epid,
                                                             continuePlayNext = true
                                                         )
@@ -588,6 +592,7 @@ fun VideoPlayerScreen(
                                     playerViewModel.loadPlayUrl(
                                         avid = videoDetailViewModel.videoDetail!!.aid,
                                         cid = videoPage.cid,
+                                        bvid = videoDetailViewModel.videoDetail!!.bvid,
                                         continuePlayNext = true
                                     )
                                 },
@@ -598,6 +603,7 @@ fun VideoPlayerScreen(
                                     playerViewModel.loadPlayUrl(
                                         avid = episode.aid,
                                         cid = episode.cid,
+                                        bvid = videoDetailViewModel.videoDetail?.bvid,
                                         epid = episode.epid,
                                         continuePlayNext = true
                                     )
