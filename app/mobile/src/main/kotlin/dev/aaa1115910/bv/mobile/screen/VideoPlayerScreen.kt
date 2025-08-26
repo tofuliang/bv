@@ -399,7 +399,6 @@ fun VideoPlayerScreen(
                                 playerViewModel.loadPlayUrl(
                                     avid = aid,
                                     cid = cid,
-                                    bvid = videoDetailViewModel.videoDetail?.bvid,
                                     epid = epid,
                                     seasonId = seasonId,
                                     continuePlayNext = true
@@ -484,7 +483,6 @@ fun VideoPlayerScreen(
                                                         playerViewModel.loadPlayUrl(
                                                             avid = videoDetailViewModel.videoDetail!!.aid,
                                                             cid = videoPage.cid,
-                                                            bvid = videoDetailViewModel.videoDetail!!.bvid,
                                                             continuePlayNext = true
                                                         )
                                                     },
@@ -495,7 +493,6 @@ fun VideoPlayerScreen(
                                                         playerViewModel.loadPlayUrl(
                                                             avid = episode.aid,
                                                             cid = episode.cid,
-                                                            bvid = videoDetailViewModel.videoDetail?.bvid,
                                                             epid = episode.epid,
                                                             continuePlayNext = true
                                                         )
@@ -592,7 +589,6 @@ fun VideoPlayerScreen(
                                     playerViewModel.loadPlayUrl(
                                         avid = videoDetailViewModel.videoDetail!!.aid,
                                         cid = videoPage.cid,
-                                        bvid = videoDetailViewModel.videoDetail!!.bvid,
                                         continuePlayNext = true
                                     )
                                 },
@@ -603,7 +599,6 @@ fun VideoPlayerScreen(
                                     playerViewModel.loadPlayUrl(
                                         avid = episode.aid,
                                         cid = episode.cid,
-                                        bvid = videoDetailViewModel.videoDetail?.bvid,
                                         epid = episode.epid,
                                         continuePlayNext = true
                                     )

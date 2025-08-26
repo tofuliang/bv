@@ -73,8 +73,6 @@ private fun SponsorBlockResultToastContent(
                     text = resultMessage,
                     color = Color.White,
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.titleMedium
                 )
             }

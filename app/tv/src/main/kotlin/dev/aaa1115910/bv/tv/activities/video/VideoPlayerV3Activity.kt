@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import dev.aaa1115910.biliapi.entity.ApiType
 import dev.aaa1115910.bv.R
 import dev.aaa1115910.bv.entity.PlayerType
@@ -134,12 +136,13 @@ class VideoPlayerV3Activity : ComponentActivity() {
             val playerIconMoving = intent.getStringExtra("playerIconMoving") ?: ""
             dev.aaa1115910.bv.tv.activities.video.VideoPlayerV3Activity.Companion.logger.fInfo { "Launch parameter: [aid=$aid, cid=$cid, bvid=$bvid]" }
             playerViewModel.apply {
-                loadPlayUrl(
-                    avid = aid,
-                    cid = cid,
-                    bvid = bvid,
-                    epid = epid.takeIf { it != 0 }
-                )
+                lifecycleScope.launch {
+                    loadPlayUrl(
+                        avid = aid,
+                        cid = cid,
+                        epid = epid.takeIf { it != 0 } ?: 0
+                    )
+                }
                 this.title = title
                 this.partTitle = partTitle
                 this.lastPlayed = played
