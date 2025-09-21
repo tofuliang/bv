@@ -58,6 +58,15 @@ fun OtherSetting(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
+                SettingListItem(
+                    title = stringResource(R.string.settings_settings_other_sponsor_block_title),
+                    supportText = stringResource(R.string.settings_settings_other_sponsor_block_text),
+                    onClick = {
+                        context.startActivity(Intent(context, SponsorBlockActivity::class.java))
+                    }
+                )
+            }
+            item {
                 SettingSwitchListItem(
                     title = stringResource(R.string.settings_other_firebase_title),
                     supportText = stringResource(R.string.settings_other_firebase_text),
@@ -118,15 +127,6 @@ fun OtherSetting(
                     onCheckedChange = {
                         enableFfmpegAudioRenderer = it
                         Prefs.enableFfmpegAudioRenderer = it
-                    }
-                )
-            }
-            item {
-                SettingListItem(
-                    title = stringResource(R.string.settings_settings_other_sponsor_block_title),
-                    supportText = stringResource(R.string.settings_settings_other_sponsor_block_text),
-                    onClick = {
-                        context.startActivity(Intent(context, SponsorBlockActivity::class.java))
                     }
                 )
             }

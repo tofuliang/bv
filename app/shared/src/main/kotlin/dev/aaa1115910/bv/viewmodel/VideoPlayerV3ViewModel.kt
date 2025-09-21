@@ -236,7 +236,7 @@ class VideoPlayerV3ViewModel(
 
                     // Show skip toast and trigger delayed skip
                     val delayMs =
-                        if (isApproachingSegment) timeBeforeSegment + 2000 else 2000 // Wait until segment start + 2s, or 2s if already in segment
+                        if (isApproachingSegment) timeBeforeSegment + 2000 else 0 // Wait until segment start + 2s, or 0s if already in segment
                     showSkipToastAndDelayedSkip(segment, delayMs, SkipToastType.AUTO_SKIP)
                     break // Process one skip at a time
                 }
@@ -1110,7 +1110,6 @@ class VideoPlayerV3ViewModel(
     }
 
     private suspend fun loadSponsorBlockData(cid: Long) {
-        // TODO: Read user preferences to see if SponsorBlock is enabled (e.g. from Prefs)
         if (!Prefs.enableSponsorBlock) {
             addLogs("SponsorBlock: 功能未启用")
             // logger.fInfo { "SponsorBlock: Feature disabled in settings" }

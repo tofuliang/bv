@@ -40,7 +40,7 @@ class RecommendViewModel(
         beforeAppendData: () -> Unit = {}
     ) {
         var loadCount = 0
-        val maxLoadMoreCount = 3
+        val maxLoadMoreCount = 30
         if (!loading) {
             if (recommendVideoList.size == 0) {
                 // first load data
