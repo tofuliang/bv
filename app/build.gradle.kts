@@ -160,7 +160,7 @@ java {
 }
 
 dependencies {
-    implementation(project(":app:mobile"))
+    // implementation(project(":app:mobile"))  // 移除mobile模块，构建纯TV版
     implementation(project(":app:tv"))
 }
 

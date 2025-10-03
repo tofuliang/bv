@@ -72,6 +72,6 @@ java {
 dependencies {
     api(project(":player:core"))
     api(project(":player:shared"))
-    api(project(":player:mobile"))
+    // api(project(":player:mobile"))  // 移除mobile依赖，构建纯TV版
     api(project(":player:tv"))
 }

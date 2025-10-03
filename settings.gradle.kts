@@ -21,7 +21,7 @@ dependencyResolutionManagement {
 }
 rootProject.name = "BV"
 include(":app")
-include(":app:mobile")
+// include(":app:mobile")  // 移除mobile模块，构建纯TV版
 include(":app:shared")
 include(":app:tv")
 include(":bili-api")
@@ -32,7 +32,7 @@ include(":libs:ffmpegDecoder")
 include(":libs:libVLC")
 include(":player")
 include(":player:core")
-include(":player:mobile")
+// include(":player:mobile")  // 移除mobile模块，构建纯TV版
 include(":player:shared")
 include(":player:tv")
 include(":utils")
